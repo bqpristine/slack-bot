@@ -31,10 +31,16 @@ def slack_events():
 
 # 🔹 AI Function to generate responses
 def ask_ai(prompt):
-    response = openai.ChatCompletion.create(
-        model="gpt-4", messages=[{"role": "user", "content": prompt}]
-    )
-    return response["choices"][0]["message"]["content"]
+    try:
+        response = openai.ChatCompletion.create(
+            model="gpt-4",
+            messages=[{"role": "user", "content": prompt}]
+        )
+        print(f"🔹 OpenAI Response: {response['choices'][0]['message']['content']}")  # Debugging log
+        return response["choices"][0]["message"]["content"]
+    except Exception as e:
+        print(f"🚨 OpenAI API Error: {e}")  # Log the error
+        return "I'm having trouble connecting to AI services right now."
 
 # 🔹 Listen for Slack mentions
 @app.event("app_mention")
