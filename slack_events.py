@@ -55,6 +55,3 @@ def handle_message_events(event, say, logger):
         logger.error(f"🚨 Error handling message event: {e}")
         say("⚠️ I encountered an error while processing your message.")
 
-@flask_app.route("/slack/events", methods=["POST"])
-def slack_events():
-    return handler.handle(request)  # ✅ Ensures Slack events are processed properly
