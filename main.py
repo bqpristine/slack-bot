@@ -42,10 +42,16 @@ def ask_ai(prompt):
         print(f"🚨 OpenAI API Error: {str(e)}")  # Log the error
         return f"I'm having trouble connecting to AI services right now. Error: {str(e)}"
 
-# 🔹 Handle mentions (@AI Assistant Bot in a channel)
+processed_events = set()  # Keep track of processed event IDs
+
 @app.event("app_mention")
 def handle_mention(event, say):
-    print(f"🔹 Received Slack mention event: {event}")  # Debugging log
+    event_id = event.get("event_ts", "")  # Get unique event timestamp
+    if event_id in processed_events:
+        return  # Ignore duplicate event
+    processed_events.add(event_id)  # Mark event as processed
+
+    print(f"🔹 Received Slack event: {event}")  # Debugging log
     user_message = event.get("text", "")
     print(f"🔹 User Message: {user_message}")  # Debugging log
 
