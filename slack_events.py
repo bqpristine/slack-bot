@@ -37,3 +37,24 @@ def handle_mention(event, say):
         response = "I can help with file management! Say 'upload OpenAI file' to upload the latest file."
 
     say(response)
+
+@app.event("message")
+def handle_message_events(event, say, logger):
+    try:
+        logger.info(f"🔹 Received message event: {event}")
+        user_message = event.get("text", "")
+
+        # Ignore messages from the bot itself to prevent infinite loops
+        bot_user_id = app.client.auth_test()["user_id"]
+        if event.get("user") == bot_user_id:
+            return  
+
+        ai_response = ask_ai(user_message)
+        say(ai_response)
+    except Exception as e:
+        logger.error(f"🚨 Error handling message event: {e}")
+        say("⚠️ I encountered an error while processing your message.")
+
+@flask_app.route("/slack/events", methods=["POST"])
+def slack_events():
+    return handler.handle(request)  # ✅ Ensures Slack events are processed properly
