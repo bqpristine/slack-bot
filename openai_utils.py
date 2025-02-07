@@ -4,17 +4,23 @@ import os
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 def ask_ai(prompt):
-    """Generate a response using OpenAI's GPT model."""
+    """Generates AI text responses while ensuring the AI stays on topic."""
     try:
-        client = openai.OpenAI(api_key=OPENAI_API_KEY)
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)  # OpenAI API client
         response = client.chat.completions.create(
             model="gpt-4",
-            messages=[{"role": "user", "content": prompt}]
+            messages=[
+                {"role": "system", "content": "You are an AI assistant that generates reports and helps with file management."},
+                {"role": "user", "content": prompt}
+            ]
         )
-        return response.choices[0].message.content
+        ai_response = response.choices[0].message.content
+        print(f"🔹 OpenAI Response: {ai_response}")  # Debugging log
+        return ai_response
     except Exception as e:
-        print(f"🚨 OpenAI API Error: {e}")
-        return f"⚠️ Error: {e}"
+        print(f"🚨 OpenAI API Error: {str(e)}")  # Log the error
+        return f"⚠️ AI Error: {str(e)}"
+
 
 def download_openai_file(file_id):
     """Download a file from OpenAI."""
