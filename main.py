@@ -41,10 +41,10 @@ def ask_ai(prompt):
 def handle_mention(event, say):
     print(f"🔹 Received Slack event: {event}")  # Debugging log
     user_message = event.get("text", "")
-    print(f"🔹 User Message: {user_message}")  # Debug log
+    print(f"🔹 User Message: {user_message}")  # Debugging log
 
     ai_response = ask_ai(user_message)  # Call OpenAI function
-    print(f"🔹 AI Response: {ai_response}")  # Debug log
+    print(f"🔹 AI Response: {ai_response}")  # Debugging log
 
     say(ai_response)  # Send response back to Slack
 
