@@ -2,6 +2,7 @@ from slack_bolt import App
 from flask import Flask, request, jsonify
 import os
 import openai
+from slack_bolt.adapter.flask import SlackRequestHandler
 
 # Load environment variables (Set these in Render)
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
@@ -14,20 +15,17 @@ flask_app = Flask(__name__)
 
 # Initialize Slack App
 app = App(token=SLACK_BOT_TOKEN, signing_secret=SLACK_SIGNING_SECRET)
+handler = SlackRequestHandler(app)  # Initialize Slack Adapter
+
+# 🔹 Handle Slack Events (Including URL Verification Challenge)
+@flask_app.route("/slack/events", methods=["POST"])
+def slack_events():
+    return handler.handle(request)  # ✅ Handles Slack challenge & events
 
 # 🔹 Health Check Endpoint (Prevents 404 Errors)
 @flask_app.route("/", methods=["GET"])
 def health_check():
     return "Slack Bot is Running!", 200
-
-# 🔹 Handle Slack's URL verification challenge
-@flask_app.route("/slack/events", methods=["POST"])
-def slack_events():
-    data = request.json
-    if "challenge" in data:
-        print("Slack Challenge Received:", data["challenge"])
-        return jsonify({"challenge": data["challenge"]})  # ✅ Fix: Correctly return challenge value
-    return jsonify({"status": "ok"}), 200  
 
 # 🔹 AI Function to generate responses
 def ask_ai(prompt):
@@ -54,6 +52,6 @@ def handle_mention(event, say):
 
     say(ai_response)  # Send response back to Slack
 
-# Run Flask server (Slack expects this to stay running)
+# 🔹 Run Flask server (Slack expects this to stay running)
 if __name__ == "__main__":
-    flask_app.run(host="0.0.0.0", port=10000)
+    flask_app.run(host="0.0.0.0", port=10000)  # ✅ Only run Flask, Slack events are handled by Bolt inside Flask
