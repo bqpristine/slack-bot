@@ -13,30 +13,33 @@ def handle_mention(event, say):
     user_message = event.get("text", "").lower()
 
     if "generate file" in user_message or "create document" in user_message:
-        ai_text = ask_ai(user_message)
+        ai_response = ask_ai(f"Generate a detailed report about {user_message}")
+
         file_name = "AI_Generated_Report.txt"
         file_path = f"/tmp/{file_name}"
 
+        # Save AI-generated text as a file
         with open(file_path, "w") as file:
-            file.write(ai_text)
+            file.write(ai_response)
 
+        # Upload file to Google Drive
         drive_link = upload_to_google_drive(file_path, file_name)
-        response = f"📂 AI-generated report uploaded! Download it here: {drive_link}"
-    
+
+        say(f"📂 AI-generated report uploaded! Download it here: {drive_link}")
+
     elif "upload openai file" in user_message:
         file_id = "file-NeZJuw5QEA9jZiUf6NKhFU"
         file_path, file_name = download_openai_file(file_id)
 
         if file_path:
             drive_link = upload_to_google_drive(file_path, file_name)
-            response = f"📂 OpenAI file uploaded! Download it here: {drive_link}"
+            say(f"📂 OpenAI file uploaded! Download it here: {drive_link}")
         else:
-            response = "⚠️ Failed to download OpenAI file."
+            say("⚠️ Failed to download OpenAI file.")
 
     else:
-        response = "I can help with file management! Say 'upload OpenAI file' to upload the latest file."
+        say("I can help with file management! Say 'upload OpenAI file' to upload the latest file.")
 
-    say(response)
 
 @app.event("message")
 def handle_message_events(event, say, client, logger):
