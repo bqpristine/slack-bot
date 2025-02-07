@@ -13,30 +13,28 @@ from googleapiclient.http import MediaFileUpload  # ✅ Fixed missing import
 # 🔹 Google Drive Credentials Path (stored as a secret file in Render)
 GOOGLE_DRIVE_CREDENTIALS_PATH = "/etc/secrets/google_drive_credentials.json"
 
-def upload_to_google_drive(file_path, file_name, folder_id=None):
-    """Uploads a file to Google Drive"""
+# 🔹 Google Drive Folder ID (Provided by user)
+GOOGLE_DRIVE_FOLDER_ID = "1P8XbcFiDgCfJv3QKlmgfS5GjJ3XMiFZE"
+
+def upload_to_google_drive(file_path, file_name, folder_id=GOOGLE_DRIVE_FOLDER_ID):
+    """Uploads a file to a specific folder in Google Drive"""
     try:
-        # Load service account credentials
         credentials = service_account.Credentials.from_service_account_file(
             GOOGLE_DRIVE_CREDENTIALS_PATH,
             scopes=["https://www.googleapis.com/auth/drive"]
         )
         drive_service = build("drive", "v3", credentials=credentials)
 
-        # File metadata
-        file_metadata = {"name": file_name}
-        if folder_id:
-            file_metadata["parents"] = [folder_id]
+        file_metadata = {"name": file_name, "parents": [folder_id]}
 
-        # Upload file
         media = MediaFileUpload(file_path, mimetype="application/octet-stream")
         file = drive_service.files().create(
             body=file_metadata, media_body=media, fields="id"
         ).execute()
 
         file_link = f"https://drive.google.com/file/d/{file.get('id')}/view"
-        print(f"🔹 File uploaded: {file_link}")
-        return f"File uploaded successfully: {file_link}"
+        print(f"🔹 File uploaded to folder: {file_link}")
+        return f"📂 File uploaded successfully: {file_link}"
     except Exception as e:
         print(f"🚨 Google Drive Upload Error: {e}")
         return f"Error uploading file to Google Drive: {e}"
@@ -85,7 +83,7 @@ processed_events = deque(maxlen=100)  # Store last 100 processed events
 
 @app.event("app_mention")
 def handle_mention(event, say):
-    user_message = event.get("text", "").lower()  # Convert message to lowercase
+    user_message = event.get("text", "").lower()
 
     if "upload file" in user_message or "save document" in user_message:
         files = event.get("files", [])
@@ -105,8 +103,9 @@ def handle_mention(event, say):
             with open(local_file_path, "wb") as file:
                 file.write(response.content)
 
-            drive_response = upload_to_google_drive(local_file_path, file_name)
-            say(drive_response)
+            # Upload file to Google Drive Folder
+            drive_response = upload_to_google_drive(local_file_path, file_name, GOOGLE_DRIVE_FOLDER_ID)
+            say(f"📂 {drive_response}")  # Reply in Slack with file link
         else:
             say("Error downloading file from Slack. Please check file permissions.")
     else:
