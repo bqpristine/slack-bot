@@ -30,11 +30,12 @@ def health_check():
 # 🔹 AI Function to generate responses
 def ask_ai(prompt):
     try:
-        response = openai.ChatCompletion.create(
+        client = openai.OpenAI(api_key=OPENAI_API_KEY)  # New API client format
+        response = client.chat.completions.create(
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        ai_response = response["choices"][0]["message"]["content"]
+        ai_response = response.choices[0].message.content
         print(f"🔹 OpenAI Response: {ai_response}")  # Debugging log
         return ai_response
     except Exception as e:
