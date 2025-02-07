@@ -39,10 +39,13 @@ def ask_ai(prompt):
 # 🔹 Listen for Slack mentions
 @app.event("app_mention")
 def handle_mention(event, say):
-    print(f"Received message: {event['text']}")  # Debugging log
-    user_message = event["text"]
+    print(f"🔹 Received Slack event: {event}")  # Debugging log
+    user_message = event.get("text", "")
+    print(f"🔹 User Message: {user_message}")  # Debug log
+
     ai_response = ask_ai(user_message)  # Call OpenAI function
-    print(f"AI Response: {ai_response}")  # Debugging log
+    print(f"🔹 AI Response: {ai_response}")  # Debug log
+
     say(ai_response)  # Send response back to Slack
 
 # Run Flask server (Slack expects this to stay running)
