@@ -66,4 +66,4 @@ def handle_message_events(event, say):
 
 # 🔹 Run Flask server (Slack expects this to stay running)
 if __name__ == "__main__":
-    flask_app.run(ho
+    flask_app.run(host="0.0.0.0", port=10000)  # ✅ Only run Flask, Slack events are handled by Bolt inside Flask
