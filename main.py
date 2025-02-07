@@ -34,7 +34,7 @@ def upload_to_google_drive(file_path, file_name, folder_id=GOOGLE_DRIVE_FOLDER_I
 
         file_link = f"https://drive.google.com/file/d/{file.get('id')}/view"
         print(f"🔹 File uploaded to folder: {file_link}")
-        return f"📂 File uploaded successfully: {file_link}"
+        return f"📂 AI-generated file uploaded! Download it here: {file_link}"
     except Exception as e:
         print(f"🚨 Google Drive Upload Error: {e}")
         return f"Error uploading file to Google Drive: {e}"
@@ -54,16 +54,11 @@ def generate_ai_file(ai_function, user_message):
             file.write(document_content)
 
         # 🔹 Upload File to Google Drive
-        drive_response = upload_to_google_drive(file_path, file_name)
-
-        # 🔹 Return the Google Drive Link
-        return f"📂 AI-generated report uploaded! Download it here: {drive_response}"
+        return upload_to_google_drive(file_path, file_name)
 
     except Exception as e:
         print(f"🚨 Error generating AI file: {e}")
         return f"⚠️ Error generating file: {e}"
-
-
 
 # 🔹 Function to Upload an Existing Slack File
 def upload_existing_file(event, slack_token):
@@ -89,7 +84,7 @@ def upload_existing_file(event, slack_token):
         return upload_to_google_drive(local_file_path, file_name)
     else:
         return "⚠️ Error downloading file from Slack. Please check file permissions."
-        
+
 # Load environment variables (Set these in Render)
 SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
 SLACK_SIGNING_SECRET = os.getenv("SLACK_SIGNING_SECRET")
@@ -132,34 +127,36 @@ from collections import deque
 
 processed_events = deque(maxlen=100)  # Store last 100 processed events
 
+# 🔹 Handle Direct Mentions
 @app.event("app_mention")
 def handle_mention(event, say):
     user_message = event.get("text", "").lower()
 
     if "generate file" in user_message or "create document" in user_message:
-        response = generate_ai_file(ask_ai, user_message)  # ✅ Calls AI function
+        response = generate_ai_file(ask_ai, user_message)
     elif "upload file" in user_message:
-        response = upload_existing_file(event, SLACK_BOT_TOKEN)  # ✅ Calls Slack file function
+        response = upload_existing_file(event, SLACK_BOT_TOKEN)
     else:
         response = "I can help with file management! Say 'upload file' to upload an existing file or 'generate file' to create one."
 
-    say(response)  # ✅ Sends response back to Slack
+    say(response)
 
+# 🔹 Handle Direct Messages and Channel Messages
+@app.event("message")
+def handle_message_events(event, say, logger):
+    try:
+        logger.info(f"🔹 Received message event: {event}")
+        user_message = event.get("text", "")
 
-# 🔹 Handle direct messages and channel messages
-@app.event("app_mention")
-def handle_mention(event, say):
-    user_message = event.get("text", "").lower()
+        # Ignore messages from the bot itself to prevent infinite loops
+        if event.get("user") == app.client.auth_test()["user_id"]:
+            return  
 
-    if "generate file" in user_message or "create document" in user_message:
-        response = generate_ai_file(ask_ai, user_message)  # ✅ Now properly saves and uploads
-    elif "upload file" in user_message:
-        response = upload_existing_file(event, SLACK_BOT_TOKEN)  # ✅ Calls Slack file upload function
-    else:
-        response = "I can help with file management! Say 'upload file' to upload an existing file or 'generate file' to create one."
-
-    say(response)  # ✅ Sends response back to Slack
-
+        ai_response = ask_ai(user_message)
+        say(ai_response)
+    except Exception as e:
+        logger.error(f"🚨 Error handling message event: {e}")
+        say("⚠️ I encountered an error while processing your message.")
 
 # 🔹 Run Flask server (Slack expects this to stay running)
 if __name__ == "__main__":
