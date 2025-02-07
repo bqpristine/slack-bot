@@ -39,19 +39,23 @@ def handle_mention(event, say):
     say(response)
 
 @app.event("message")
-def handle_message_events(event, say, logger):
+def handle_message_events(event, say, client, logger):
     try:
         logger.info(f"🔹 Received message event: {event}")
         user_message = event.get("text", "")
 
-        # Ignore messages from the bot itself to prevent infinite loops
-        bot_user_id = app.client.auth_test()["user_id"]
+        # Ignore messages from the bot itself
+        bot_user_id = client.auth_test()["user_id"]
         if event.get("user") == bot_user_id:
             return  
 
         ai_response = ask_ai(user_message)
-        say(ai_response)
+
+        # 🔹 Define the channel explicitly (replace with a valid Slack channel ID)
+        channel_id = event.get("channel", "YOUR_DEFAULT_CHANNEL_ID")  # <-- Replace this with your channel ID
+
+        client.chat_postMessage(channel=channel_id, text=ai_response)
+
     except Exception as e:
         logger.error(f"🚨 Error handling message event: {e}")
-        say("⚠️ I encountered an error while processing your message.")
-
+        client.chat_postMessage(channel=channel_id, text="⚠️ I encountered an error while processing your message.")
