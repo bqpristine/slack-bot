@@ -85,6 +85,7 @@ processed_events = deque(maxlen=100)  # Store last 100 processed events
 def handle_mention(event, say):
     user_message = event.get("text", "").lower()
 
+    # 🔹 Check if a file was uploaded with the message
     if "upload file" in user_message or "save document" in user_message:
         files = event.get("files", [])
 
@@ -92,9 +93,11 @@ def handle_mention(event, say):
             say("Please upload a file along with your message.")
             return
         
-        file_url = files[0].get("url_private_download")
-        file_name = files[0].get("name")
+        file_info = files[0]  # Get first uploaded file details
+        file_url = file_info.get("url_private_download")
+        file_name = file_info.get("name")
 
+        # 🔹 Download file from Slack
         local_file_path = f"/tmp/{file_name}"
         headers = {"Authorization": f"Bearer {SLACK_BOT_TOKEN}"}
         response = requests.get(file_url, headers=headers)
@@ -103,13 +106,14 @@ def handle_mention(event, say):
             with open(local_file_path, "wb") as file:
                 file.write(response.content)
 
-            # Upload file to Google Drive Folder
+            # 🔹 Upload file to Google Drive Folder
             drive_response = upload_to_google_drive(local_file_path, file_name, GOOGLE_DRIVE_FOLDER_ID)
             say(f"📂 {drive_response}")  # Reply in Slack with file link
         else:
-            say("Error downloading file from Slack. Please check file permissions.")
+            say("⚠️ Error downloading file from Slack. Please check file permissions.")
     else:
         say("I can help with file management! Say 'upload file' and attach a document.")
+
 
 # 🔹 Handle direct messages and channel messages
 @app.event("message")
