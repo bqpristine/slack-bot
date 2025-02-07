@@ -15,3 +15,7 @@ def health_check():
 
 if __name__ == "__main__":
     flask_app.run(host="0.0.0.0", port=10000)
+
+@flask_app.route("/slack/events", methods=["POST"])
+def slack_events():
+    return handler.handle(request)  # ✅ Ensures Slack events are processed properly
