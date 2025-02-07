@@ -41,7 +41,7 @@ def upload_to_google_drive(file_path, file_name, folder_id=GOOGLE_DRIVE_FOLDER_I
 
 # 🔹 Function to Generate AI Content & Upload as a File
 def generate_ai_file(ai_function, user_message):
-    """Generates text using AI, saves it as a file, and uploads it."""
+    """Generates text using AI, saves it as a file, and uploads it to Google Drive."""
     try:
         document_content = ai_function(f"Generate a summary about {user_message}")
 
@@ -51,10 +51,16 @@ def generate_ai_file(ai_function, user_message):
         with open(file_path, "w") as file:
             file.write(document_content)
 
-        return upload_to_google_drive(file_path, file_name)
+        # 🔹 Upload File to Google Drive
+        drive_response = upload_to_google_drive(file_path, file_name)
+
+        # 🔹 Return the correct Google Drive link instead of a placeholder
+        return f"📂 AI-created file uploaded successfully! Download it here: {drive_response}"
+
     except Exception as e:
         print(f"🚨 Error generating AI file: {e}")
         return f"⚠️ Error generating file: {e}"
+
 
 # 🔹 Function to Upload an Existing Slack File
 def upload_existing_file(event, slack_token):
@@ -135,6 +141,7 @@ def handle_mention(event, say):
         response = "I can help with file management! Say 'upload file' to upload an existing file or 'generate file' to create one."
 
     say(response)  # ✅ Sends response back to Slack
+
 
 # 🔹 Handle direct messages and channel messages
 @app.event("message")
