@@ -85,19 +85,34 @@ processed_events = deque(maxlen=100)  # Store last 100 processed events
 def handle_mention(event, say):
     user_message = event.get("text", "").lower()
 
-    # 🔹 Check if a file was uploaded with the message
-    if "upload file" in user_message or "save document" in user_message:
+    if "generate file" in user_message or "create document" in user_message:
+        # 🔹 AI Generates Content
+        document_content = ask_ai("Generate a summary about " + user_message)
+        
+        # 🔹 Save Content to a File
+        file_name = "AI_Generated_Document.txt"
+        file_path = f"/tmp/{file_name}"
+        with open(file_path, "w") as file:
+            file.write(document_content)
+
+        # 🔹 Upload File to Google Drive
+        drive_response = upload_to_google_drive(file_path, file_name, GOOGLE_DRIVE_FOLDER_ID)
+        
+        # 🔹 Reply with Google Drive Link
+        say(f"📄 AI-created file uploaded: {drive_response}")
+    
+    elif "upload file" in user_message:
         files = event.get("files", [])
 
         if not files:
             say("Please upload a file along with your message.")
             return
         
-        file_info = files[0]  # Get first uploaded file details
+        file_info = files[0]
         file_url = file_info.get("url_private_download")
         file_name = file_info.get("name")
 
-        # 🔹 Download file from Slack
+        # 🔹 Download File from Slack
         local_file_path = f"/tmp/{file_name}"
         headers = {"Authorization": f"Bearer {SLACK_BOT_TOKEN}"}
         response = requests.get(file_url, headers=headers)
@@ -106,13 +121,15 @@ def handle_mention(event, say):
             with open(local_file_path, "wb") as file:
                 file.write(response.content)
 
-            # 🔹 Upload file to Google Drive Folder
+            # 🔹 Upload to Google Drive
             drive_response = upload_to_google_drive(local_file_path, file_name, GOOGLE_DRIVE_FOLDER_ID)
-            say(f"📂 {drive_response}")  # Reply in Slack with file link
+            say(f"📂 {drive_response}")  
         else:
             say("⚠️ Error downloading file from Slack. Please check file permissions.")
+    
     else:
-        say("I can help with file management! Say 'upload file' and attach a document.")
+        say("I can help with file management! Say 'upload file' to upload an existing file or 'generate file' to create one.")
+
 
 
 # 🔹 Handle direct messages and channel messages
