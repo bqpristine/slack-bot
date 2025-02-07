@@ -43,9 +43,11 @@ def upload_to_google_drive(file_path, file_name, folder_id=GOOGLE_DRIVE_FOLDER_I
 def generate_ai_file(ai_function, user_message):
     """Generates text using AI, saves it as a file, and uploads it to Google Drive."""
     try:
-        document_content = ai_function(f"Generate a summary about {user_message}")
+        # 🔹 Generate AI Content
+        document_content = ai_function(f"Generate a detailed report about {user_message}")
 
-        file_name = "AI_Generated_Document.txt"
+        # 🔹 Save AI Content as a Text File
+        file_name = "AI_Generated_Report.txt"
         file_path = f"/tmp/{file_name}"
         
         with open(file_path, "w") as file:
@@ -54,12 +56,13 @@ def generate_ai_file(ai_function, user_message):
         # 🔹 Upload File to Google Drive
         drive_response = upload_to_google_drive(file_path, file_name)
 
-        # 🔹 Return the correct Google Drive link instead of a placeholder
-        return f"📂 AI-created file uploaded successfully! Download it here: {drive_response}"
+        # 🔹 Return the Google Drive Link
+        return f"📂 AI-generated report uploaded! Download it here: {drive_response}"
 
     except Exception as e:
         print(f"🚨 Error generating AI file: {e}")
         return f"⚠️ Error generating file: {e}"
+
 
 
 # 🔹 Function to Upload an Existing Slack File
@@ -144,22 +147,19 @@ def handle_mention(event, say):
 
 
 # 🔹 Handle direct messages and channel messages
-@app.event("message")
-def handle_message_events(event, say):
-    event_id = event.get("event_ts", "")  # Unique event timestamp from Slack
-    if event_id in processed_events:
-        print(f"🔹 Ignored duplicate event: {event_id}")  # Debugging log
-        return  # Ignore duplicate event
-    processed_events.append(event_id)  # Mark event as processed
+@app.event("app_mention")
+def handle_mention(event, say):
+    user_message = event.get("text", "").lower()
 
-    print(f"🔹 Processing Message Event: {event}")  # Debugging log
-    user_message = event.get("text", "")
-    print(f"🔹 User Message: {user_message}")  # Debugging log
+    if "generate file" in user_message or "create document" in user_message:
+        response = generate_ai_file(ask_ai, user_message)  # ✅ Now properly saves and uploads
+    elif "upload file" in user_message:
+        response = upload_existing_file(event, SLACK_BOT_TOKEN)  # ✅ Calls Slack file upload function
+    else:
+        response = "I can help with file management! Say 'upload file' to upload an existing file or 'generate file' to create one."
 
-    ai_response = ask_ai(user_message)  # Call OpenAI function
-    print(f"🔹 AI Response: {ai_response}")  # Debugging log
+    say(response)  # ✅ Sends response back to Slack
 
-    say(ai_response)  # Send response back to Slack
 
 # 🔹 Run Flask server (Slack expects this to stay running)
 if __name__ == "__main__":
