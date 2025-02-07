@@ -42,16 +42,19 @@ def ask_ai(prompt):
         print(f"🚨 OpenAI API Error: {str(e)}")  # Log the error
         return f"I'm having trouble connecting to AI services right now. Error: {str(e)}"
 
-processed_events = set()  # Keep track of processed event IDs
+from collections import deque
+
+processed_events = deque(maxlen=100)  # Store last 100 processed events
 
 @app.event("app_mention")
 def handle_mention(event, say):
-    event_id = event.get("event_ts", "")  # Get unique event timestamp
+    event_id = event.get("event_ts", "")  # Unique event timestamp from Slack
     if event_id in processed_events:
+        print(f"🔹 Ignored duplicate event: {event_id}")  # Debugging log
         return  # Ignore duplicate event
-    processed_events.add(event_id)  # Mark event as processed
+    processed_events.append(event_id)  # Mark event as processed
 
-    print(f"🔹 Received Slack event: {event}")  # Debugging log
+    print(f"🔹 Processing Slack event: {event}")  # Debugging log
     user_message = event.get("text", "")
     print(f"🔹 User Message: {user_message}")  # Debugging log
 
@@ -63,7 +66,13 @@ def handle_mention(event, say):
 # 🔹 Handle direct messages and channel messages
 @app.event("message")
 def handle_message_events(event, say):
-    print(f"🔹 Received Message Event: {event}")  # Debugging log
+    event_id = event.get("event_ts", "")  # Unique event timestamp from Slack
+    if event_id in processed_events:
+        print(f"🔹 Ignored duplicate event: {event_id}")  # Debugging log
+        return  # Ignore duplicate event
+    processed_events.append(event_id)  # Mark event as processed
+
+    print(f"🔹 Processing Message Event: {event}")  # Debugging log
     user_message = event.get("text", "")
     print(f"🔹 User Message: {user_message}")  # Debugging log
 
