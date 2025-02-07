@@ -34,11 +34,12 @@ def ask_ai(prompt):
             model="gpt-4",
             messages=[{"role": "user", "content": prompt}]
         )
-        print(f"🔹 OpenAI Response: {response['choices'][0]['message']['content']}")  # Debugging log
-        return response["choices"][0]["message"]["content"]
+        ai_response = response["choices"][0]["message"]["content"]
+        print(f"🔹 OpenAI Response: {ai_response}")  # Debugging log
+        return ai_response
     except Exception as e:
-        print(f"🚨 OpenAI API Error: {e}")  # Log the error
-        return "I'm having trouble connecting to AI services right now."
+        print(f"🚨 OpenAI API Error: {str(e)}")  # Log the error
+        return f"I'm having trouble connecting to AI services right now. Error: {str(e)}"
 
 # 🔹 Handle mentions (@AI Assistant Bot in a channel)
 @app.event("app_mention")
