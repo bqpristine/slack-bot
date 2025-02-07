@@ -20,7 +20,7 @@ handler = SlackRequestHandler(app)  # Initialize Slack Adapter
 # 🔹 Handle Slack Events (Including URL Verification Challenge)
 @flask_app.route("/slack/events", methods=["POST"])
 def slack_events():
-    return handler.handle(request)  # ✅ Handles Slack challenge & events
+    return handler.handle(request)  # ✅ Ensures Slack events are processed properly
 
 # 🔹 Health Check Endpoint (Prevents 404 Errors)
 @flask_app.route("/", methods=["GET"])
@@ -40,10 +40,22 @@ def ask_ai(prompt):
         print(f"🚨 OpenAI API Error: {e}")  # Log the error
         return "I'm having trouble connecting to AI services right now."
 
-# 🔹 Listen for Slack mentions
+# 🔹 Handle mentions (@AI Assistant Bot in a channel)
 @app.event("app_mention")
 def handle_mention(event, say):
-    print(f"🔹 Received Slack event: {event}")  # Debugging log
+    print(f"🔹 Received Slack mention event: {event}")  # Debugging log
+    user_message = event.get("text", "")
+    print(f"🔹 User Message: {user_message}")  # Debugging log
+
+    ai_response = ask_ai(user_message)  # Call OpenAI function
+    print(f"🔹 AI Response: {ai_response}")  # Debugging log
+
+    say(ai_response)  # Send response back to Slack
+
+# 🔹 Handle direct messages and channel messages
+@app.event("message")
+def handle_message_events(event, say):
+    print(f"🔹 Received Message Event: {event}")  # Debugging log
     user_message = event.get("text", "")
     print(f"🔹 User Message: {user_message}")  # Debugging log
 
@@ -54,4 +66,4 @@ def handle_mention(event, say):
 
 # 🔹 Run Flask server (Slack expects this to stay running)
 if __name__ == "__main__":
-    flask_app.run(host="0.0.0.0", port=10000)  # ✅ Only run Flask, Slack events are handled by Bolt inside Flask
+    flask_app.run(ho
