@@ -1,8 +1,13 @@
-from openai_utils import ask_ai  # ✅ Import the updated AI function
+from openai_utils import ask_ai
+from google_drive_utils import upload_to_google_drive
+import os
+import requests
 
-@app.event("app_mention")
+SLACK_BOT_TOKEN = os.getenv("SLACK_BOT_TOKEN")
+
 def handle_mention(event, say):
-    user_message = event.get("text", "").lower().replace("@ai assistant bot", "").strip()
+    """Handles mentions in Slack and processes AI requests."""
+    user_message = event.get("text", "").lower()
 
     if "generate file" in user_message or "create document" in user_message:
         topic = user_message.replace("generate file", "").replace("create document", "").strip()
@@ -21,15 +26,12 @@ def handle_mention(event, say):
 
         say(f"📂 AI-generated report uploaded! Download it here: {drive_link}")
 
-    elif "upload openai file" in user_message:
-        file_id = "file-NeZJuw5QEA9jZiUf6NKhFU"
-        file_path, file_name = download_openai_file(file_id)
-
-        if file_path:
-            drive_link = upload_to_google_drive(file_path, file_name)
-            say(f"📂 OpenAI file uploaded! Download it here: {drive_link}")
-        else:
-            say("⚠️ Failed to download OpenAI file.")
-
     else:
-        say("I can help with file management! Say 'upload OpenAI file' to upload the latest file.")
+        say("I can help with file management! Say 'generate file' or 'upload file'.")
+
+def handle_message_events(event, say):
+    """Handles messages in Slack."""
+    user_message = event.get("text", "").lower()
+
+    ai_response = ask_ai(user_message)
+    say(ai_response)
