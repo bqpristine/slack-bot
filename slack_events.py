@@ -1,3 +1,5 @@
+from openai_utils import ask_ai  # ✅ Import the updated AI function
+
 @app.event("app_mention")
 def handle_mention(event, say):
     user_message = event.get("text", "").lower().replace("@ai assistant bot", "").strip()
